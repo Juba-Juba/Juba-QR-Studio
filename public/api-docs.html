@@ -1,0 +1,39 @@
+<!doctype html><html lang="en" dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Juba QR Studio — REST API</title><style>
+:root{font-family:Arial,Segoe UI,sans-serif;color:#233c35;background:#eff3f5}*{box-sizing:border-box}body{margin:0}.page{max-width:960px;margin:30px auto;padding:0 16px 60px}header{display:flex;justify-content:space-between;align-items:center;gap:10px}a{color:#1394c9}h1{font-size:30px}h2{margin-top:32px;font-size:19px}.card{padding:25px;background:white;border:1px solid #dde8e4;border-radius:8px;box-shadow:0 6px 30px #23443912}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#122d31;color:#e3f4f6;padding:17px;border-radius:6px;line-height:1.65;font-size:13px}code{font-family:Consolas,monospace}.endpoint{display:inline-block;background:#e4f8f1;color:#126c50;font-weight:bold;padding:8px 10px;border-radius:5px}.columns{display:grid;grid-template-columns:1fr 1fr;gap:20px}.columns>*{min-width:0}.muted{color:#708582;font-size:13px;line-height:1.7}table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:9px;border-bottom:1px solid #e5edeb;font-size:13px}th{background:#f3f8f5}button{background:#009fee;color:white;border:0;padding:11px 18px;border-radius:4px;cursor:pointer}input,select{width:100%;padding:10px;border:1px solid #bccbd1;border-radius:4px;font:inherit;margin:5px 0 13px}.try{display:flex;flex-direction:column;max-width:480px}.try img{width:230px;height:230px;object-fit:contain;align-self:center;margin:15px}.warn{background:#fff8e3;padding:10px;border-left:4px solid #e7a32e}@media(max-width:650px){.columns{grid-template-columns:1fr}}
+</style></head><body><main class="page"><header><h1>Juba QR Studio · API</h1><a href="/">← Back to Studio</a></header><div class="card"><p>Public, no-password API for creating customized QR codes. Same rendering engine as the editor. Works locally or on a deployed Node/Docker server.</p><p class="endpoint">POST /api/v1/qr</p> <p class="endpoint">GET /api/v1/qr</p> <p class="endpoint">GET /qr/custom</p><p class="muted">The <code>/qr/custom</code alias accepts QRCode Monkey-style <code>data</code>, <code>size</code>, <code>file</code> and <code>config</code> parameters for easy migration. Not all original proprietary style names are exactly identical.</p><h2>POST JSON example</h2><pre>POST https://your-domain.com/api/v1/qr
+Content-Type: application/json
+
+{
+  "data": "https://example.com/q/stand-001",
+  "size": 1000,
+  "file": "svg",
+  "download": false,
+  "config": {
+    "body": "rhombus",
+    "eye": "frame13",
+    "eyeBall": "ball14",
+    "bodyColor": "#294D2B",
+    "bgColor": "#FFFFFF",
+    "gradientColor1": "#294D2B",
+    "gradientColor2": "#64A83D",
+    "gradientType": "linear",
+    "gradientOnEyes": false,
+    "logoMode": "clean"
+  }
+}</pre><h2>Call from another app</h2><pre>const response = await fetch('https://YOUR-SERVER/api/v1/qr', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    data: 'https://example.com/q/stand-001',
+    file: 'png',
+    size: 1000,
+    config: {body: 'dots', eye: 'frame11', eyeBall: 'ball12', bodyColor: '#294D2B'}
+  })
+});
+if (!response.ok) throw new Error(await response.text());
+const qrImageBlob = await response.blob();
+const url = URL.createObjectURL(qrImageBlob);
+document.querySelector('#qr-preview').src = url;</pre><h2>Try it</h2><div class="try"><label for="data">Content / URL</label><input id="data" value="https://example.com/q/stand-001"><label for="format">Format</label><select id="format"><option value="svg">SVG</option><option value="png">PNG</option></select><button id="run">Generate QR</button><div id="result"></div><img id="sample" alt="Generated QR result" hidden></div><div class="columns"><div><h2>Other endpoints</h2><table><tr><th>Endpoint</th><th>Use</th></tr><tr><td>GET /api/v1/health</td><td>Health check</td></tr><tr><td>GET /api/v1/shapes</td><td>List the 22/15/18 styles</td></tr><tr><td>GET /qr/custom</td><td>Compatibility alias</td></tr></table></div><div><h2>Constraints</h2><table><tr><th>Property</th><th>Rule</th></tr><tr><td>size</td><td>200–3000 px</td></tr><tr><td>data</td><td>1–2500 UTF-8 bytes</td></tr><tr><td>file</td><td>svg, png</td></tr><tr><td>logo</td><td>Base64 data URL, PNG/JPEG/WebP ≤600KB</td></tr><tr><td>HTTP body</td><td>≤1MB</td></tr></table></div></div><h2>Deploy & security</h2><p class="warn">Login is deliberately removed. Anybody with access to a publicly deployed server can use the editor and the API. Protect the service using a network gateway / Cloudflare Access and production rate limiting if this should remain private.</p><p>SVG works in Node immediately. For PNG, install <code>librsvg2-bin</code> (rsvg-convert) or Inkscape on the host; the included Dockerfile provides the rasterizer. GitHub Pages can host the editor but does <strong>not</strong> run the Node API.</p><p class="muted">The design engine is independently implemented, and not affiliated with or licensed by QRCode Monkey. Styles are similar to the screenshot, not pixel-identical reproductions of proprietary assets.</p></div></main><script>
+let previous;
+document.getElementById('run').addEventListener('click',async()=>{const result=document.getElementById('result');const img=document.getElementById('sample');result.textContent='Generating…';img.hidden=true;try{const r=await fetch('/api/v1/qr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({data:document.getElementById('data').value,file:document.getElementById('format').value,size:500,config:{body:'dots',eye:'frame11',eyeBall:'ball12',bodyColor:'#294D2B'}})});if(!r.ok)throw Error((await r.json()).message);if(previous)URL.revokeObjectURL(previous);previous=URL.createObjectURL(await r.blob());img.src=previous;img.hidden=false;result.textContent='Ready';}catch(e){result.textContent=e.message;}});
+</script></body></html>

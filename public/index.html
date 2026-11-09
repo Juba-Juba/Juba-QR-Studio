@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#13788d">
+<meta name="description" content="Open, self-hosted QR generator with custom shapes, colors, logos, and vector export.">
+<title>Juba QR Studio — QR Code Generator</title>
+<link rel="stylesheet" href="./assets/styles.css">
+<script defer src="./assets/qr-encoder.js"
+></script>
+<script defer src="./assets/qr-renderer.js"></script>
+<script defer src="./assets/app.js"></script>
+</head>
+<body>
+<header class="hero">
+  <div class="header-top content-width">
+    <div class="wordmark"><div class="brand-symbol" aria-hidden="true"><span></span><span></span><span></span><span></span></div><div><div class="wordmark-name">JUBA <span>QR STUDIO</span></div><div class="wordmark-small" data-i18n="tagline">YOUR QR DESIGN STUDIO</div></div></div>
+    <div class="header-actions"><div class="private-pill"><span class="online-dot"></span><span data-i18n="private">No login required</span></div><button class="header-link" id="lang-toggle" title="Switch language">عربي</button><button class="header-link" id="save-preset" data-i18n="savePreset">Save preset</button><a href="./api-docs.html" class="header-link logout" data-i18n="signout">API Documentation</a></div>
+  </div>
+  <div class="tabline content-width" id="type-tabs" role="tablist" aria-label="QR content type"></div>
+</header>
+<main class="content-width main-shell">
+  <div class="editor" id="editor-root">
+    <section class="edit-pane" aria-label="QR settings">
+      <div class="accordion" id="section-content">
+        <button class="accordion-header" data-accordion="content" aria-expanded="false"><span class="section-icon">🌐</span><span data-i18n="enterContent">ENTER CONTENT</span><span class="accordion-chevron">−</span></button>
+        <div class="accordion-panel" hidden><div class="section-body" id="content-fields"></div><div class="content-inline-note"><span class="info-dot">i</span><span data-i18n="staticTip">Static QR content. To edit the destination later, use a redirect URL from your own platform.</span></div></div>
+      </div>
+      <div class="accordion" id="section-colors">
+        <button class="accordion-header" data-accordion="colors" aria-expanded="false"><span class="section-icon paint">✎</span><span data-i18n="setColors">SET COLORS</span><span class="accordion-chevron">+</span></button>
+        <div class="accordion-panel" hidden><div class="section-body">
+          <h4 data-i18n="foreground">Foreground Color</h4>
+          <div class="radio-line"><label><input type="radio" name="color-mode" value="single" checked><span data-i18n="singleColor">Single Color</span></label><label><input type="radio" name="color-mode" value="gradient"><span data-i18n="gradient">Color Gradient</span></label></div>
+          <div class="color-grid"><label class="color-field"><input type="color" id="fg-color" value="#294d2b"><input type="text" class="hex-value" id="fg-hex" value="#294D2B" maxlength="7" aria-label="Foreground color hex"></label><label class="color-field is-hidden" id="fg2-wrap"><input type="color" id="fg2-color" value="#25a9a0"><input type="text" class="hex-value" id="fg2-hex" value="#25A9A0" maxlength="7" aria-label="Gradient second color hex"></label><select id="gradient-type" class="select-control is-hidden"><option value="linear">Linear Gradient</option><option value="radial">Radial Gradient</option></select></div>
+          <label class="check-row"><input type="checkbox" id="eye-custom"><span data-i18n="customEyes">Custom Eye Color</span></label>
+          <div class="eyes-colors is-hidden" id="eye-colors"><p class="muted tiny" data-i18n="eyeHelp">Different colors for each eye frame and center.</p><div class="eye-color-grid" id="eye-color-grid"></div><button class="micro-btn" id="copy-eye-colors" type="button" data-i18n="copyFg">Copy Foreground</button><label class="check-row"><input type="checkbox" id="eye-gradient"><span data-i18n="gradientEyes">Apply gradient to eyes</span></label></div>
+          <h4 data-i18n="background">Background Color</h4>
+          <label class="color-field bg-field"><input type="color" id="bg-color" value="#ffffff"><input type="text" class="hex-value" id="bg-hex" value="#FFFFFF" maxlength="7" aria-label="Background hex"></label>
+          <label class="check-row"><input type="checkbox" id="transparent-bg"><span data-i18n="transparentBg">Transparent background</span></label>
+          <div class="content-inline-note"><span class="info-dot">i</span><span data-i18n="contrastHelp">Choose dark QR colors over a light background for better scan reliability.</span></div>
+        </div></div>
+      </div>
+      <div class="accordion" id="section-logo">
+        <button class="accordion-header" data-accordion="logo" aria-expanded="false"><span class="section-icon">▧</span><span data-i18n="addLogo">ADD LOGO IMAGE</span><span class="accordion-chevron">+</span></button>
+        <div class="accordion-panel" hidden><div class="section-body">
+          <div class="logo-toolbar"><div class="logo-mini-preview" id="logo-preview">No Logo</div><div class="logo-controls"><label for="logo-input" class="btn btn-blue" data-i18n="uploadLogo">Upload Image</label><input type="file" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" id="logo-input" hidden><button class="btn btn-outline" id="remove-logo" type="button" data-i18n="removeLogo">Remove Logo</button></div></div>
+          <label class="check-row"><input type="checkbox" id="logo-clean" checked><span data-i18n="logoClean">Remove background behind logo</span></label>
+          <div class="range-inline"><label for="logo-size" data-i18n="logoSize">Logo Size</label><input type="range" id="logo-size" min="10" max="28" value="19"><output id="logo-size-val">19%</output></div>
+          <p class="small-title" data-i18n="logoGallery">Logo Gallery</p><div class="logo-gallery" id="logo-gallery"></div>
+          <div class="content-inline-note"><span class="info-dot">i</span><span data-i18n="logoHelp">Upload PNG, JPG, GIF, WebP or SVG (max 2 MB). Logos are embedded in the export; no uploads are sent to any server.</span></div>
+        </div></div>
+      </div>
+      <div class="accordion is-open" id="section-design">
+        <button class="accordion-header" data-accordion="design" aria-expanded="true"><span class="section-icon">▦</span><span data-i18n="customize">CUSTOMIZE DESIGN</span><span class="accordion-chevron">+</span></button>
+        <div class="accordion-panel"><div class="section-body design-controls">
+          <h4 data-i18n="bodyShape">Body Shape</h4><div class="shape-options" id="body-shapes" role="group" aria-label="Body Shape"></div>
+          <h4 data-i18n="eyeFrame">Eye Frame Shape</h4><div class="shape-options frames" id="frame-shapes" role="group" aria-label="Eye Frame Shape"></div>
+          <h4 data-i18n="eyeBall">Eye Ball Shape</h4><div class="shape-options balls" id="ball-shapes" role="group" aria-label="Eye Ball Shape"></div>
+          <div class="content-inline-note"><span class="info-dot">i</span><span data-i18n="designHelp">High-contrast designs with classic corner markers usually scan most reliably.</span></div>
+        </div></div>
+      </div>
+    </section>
+    <aside class="preview-pane" aria-label="QR code preview">
+      <div class="preview-top" hidden><div class="preview-label"><span class="preview-dot"></span><span data-i18n="livePreview">LIVE PREVIEW</span></div><span class="scan-badge" id="status-badge">Preview ready</span></div>
+      <div class="qr-stage" id="qr-stage"><div class="qr-preview" id="qr-preview" role="img" aria-label="QR code preview"></div></div>
+      <div class="size-section"><input type="range" id="export-size" min="200" max="3000" step="100" value="1000" aria-label="Export size"><div class="size-labels"><span data-i18n="lowQuality">Low Quality</span><strong id="size-value">1000 x 1000 Px</strong><span data-i18n="highQuality">High Quality</span></div></div>
+      <div class="download-row"><button class="btn btn-green" id="generate-btn" data-i18n="generate">Create QR Code</button><button class="btn btn-blue" id="download-png" data-i18n="downloadPng">Download PNG</button></div>
+      <div class="formats-row"><button id="download-svg" class="format-btn">.SVG</button><button id="download-pdf" class="format-btn">.PDF*</button><button id="download-eps" class="format-btn">.EPS*</button></div>
+      <div class="formats-note" data-i18n="formatNote">* PDF / EPS export a classic high-contrast QR. Use SVG for full vector design + logo.</div>
+      <div class="preview-info"><span class="info-dot">i</span><p data-i18n="localInfo">Static QR codes can be used anywhere. For redirects and scan statistics, use a link from your own application.</p></div>
+      <div class="quick-actions" hidden><button id="copy-content" class="action-link">⎘ <span data-i18n="copyContent">Copy QR data</span></button><button id="reset-all" class="action-link">↻ <span data-i18n="reset">Reset</span></button></div>
+    </aside>
+  </div>
+  <div class="under-actions"><button class="templates-button" id="open-templates">⚙ &nbsp;<span data-i18n="templates">QR Code Templates</span></button><button class="secondary-button" id="import-preset"><span data-i18n="importPreset">Import preset</span></button><button class="secondary-button" id="export-preset"><span data-i18n="exportPreset">Export preset</span></button><input type="file" id="preset-input" accept="application/json,.json" hidden></div>
+  <div class="bottom-info"><div><b data-i18n="privateEngine">Private QR engine</b><span data-i18n="bottomSummary">Export ready-to-print codes in seconds without API subscriptions.</span></div><div class="feature-chips"><span>PNG</span><span>SVG</span><span>PDF</span><span>EPS</span><span>Offline QR</span></div></div>
+</main>
+<footer class="site-footer"><span>QR STUDIO · 2026</span><span data-i18n="footer">Independent QR editor · Not affiliated with QRCode Monkey</span></footer>
+<div class="modal-backdrop" id="templates-modal" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="template-heading"><div class="modal-header"><div><h2 id="template-heading" data-i18n="chooseTemplate">Choose a QR Template</h2><p data-i18n="templateDesc">Start with a professionally balanced color and shape preset.</p></div><button class="modal-close" id="close-templates" aria-label="Close">×</button></div><div class="template-grid" id="template-grid"></div></div></div>
+<div class="modal-backdrop" id="save-modal" hidden><div class="modal small-modal" role="dialog" aria-modal="true" aria-labelledby="save-heading"><div class="modal-header"><div><h2 id="save-heading" data-i18n="savePreset">Save preset</h2><p data-i18n="saveDesc">Save a named design locally in this browser.</p></div><button class="modal-close" id="close-save" aria-label="Close">×</button></div><label class="form-label" for="preset-name" data-i18n="presetName">Preset name</label><input class="text-control" id="preset-name" placeholder="My design"><button class="btn btn-green full-btn" id="confirm-save" data-i18n="savePreset">Save preset</button><div class="saved-list" id="saved-list"></div></div></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
