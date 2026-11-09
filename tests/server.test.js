@@ -32,3 +32,14 @@ test('PNG output is a real binary PNG when SVG rasterizer is installed',async()=
  assert.ok([200,503].includes(r.status));
  if(r.status===200){const bytes=Buffer.from(await r.arrayBuffer());assert.ok(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));assert.ok(bytes.length>1000);}
 });
+test('official Monkey identifiers and independent finder flip transforms are available',async()=>{
+ assert.ok(BODIES.includes('rounded-pointed'));
+ assert.ok(BODIES.includes('circle-zebra-vertical'));
+ assert.ok(FRAMES.includes('frame14'));
+ assert.ok(BALLS.includes('ball16'));
+ const opts=requestOptions({data:'https://example.com',config:{body:'rounded-pointed',eye:'frame14',eyeBall:'ball16',erf2:['fh'],brf3:['fv'],bodyColor:'#294D2B'}});
+ const svg=generateSVG(opts);
+ assert.match(svg,/scale\(-1 1\)/);
+ assert.match(svg,/scale\(1 -1\)/);
+ assert.throws(()=>requestOptions({data:'x',config:{erf1:['bad']}}),/erf1/);
+});

@@ -38,8 +38,8 @@ test('supports URL, SMS, NFC pages, and invalid URL validation',()=>{
 test('presets reject malicious colors and image URLs',()=>{
  const e=getEngine();assert.throws(()=>e.validateImportedDesign({fg:'url(javascript:evil)'}));
  assert.throws(()=>e.validateImportedDesign({logo:{name:'test',data:'javascript:alert(1)'}}));
- const good=e.validateImportedDesign({fg:'#abcdef',frame:'rounded',logo:null});
- assert.equal(good.fg,'#ABCDEF');assert.equal(good.frame,'rounded');
+ const good=e.validateImportedDesign({fg:'#abcdef',frame:'frame6',logo:null});
+ assert.equal(good.fg,'#ABCDEF');assert.equal(good.frame,'frame6');
 });
 test('renders different shapes, gradients and logos into portable SVG',()=>{
  const e=getEngine();e.setState({body:'dots',frame:'rounded',ball:'circle',fg:'#132D4F',fg2:'#25A9A0',colorMode:'gradient',logo:{name:'test',data:'data:image/png;base64,aGk='}});

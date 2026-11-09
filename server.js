@@ -63,7 +63,7 @@ const server=http.createServer(async(req,res)=>{
  const pathname=url.pathname,method=req.method||'GET',api=pathname.startsWith('/api/')||pathname==='/qr/custom';
  if(api){cors(req,res);
   if(method==='OPTIONS'){res.statusCode=204;res.end();return;}
-  if(pathname==='/api/v1/health'&&method==='GET')return json(res,200,{ok:true,name:'Juba QR Studio',version:'2.0.0'});
+  if(pathname==='/api/v1/health'&&method==='GET')return json(res,200,{ok:true,name:'Juba QR Studio',version:'2.1.0'});
   if(pathname==='/api/v1/shapes'&&method==='GET')return json(res,200,{body:BODIES,eye:FRAMES,eyeBall:BALLS,formats:['svg','png'],limits:{size:{min:200,max:3000},dataBytes:2500}});
   if(pathname==='/api/v1/qr'||pathname==='/qr/custom'){
    if(method!=='GET'&&method!=='POST')return json(res,405,{error:'method_not_allowed'});

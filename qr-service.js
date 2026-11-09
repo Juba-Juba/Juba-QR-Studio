@@ -2,13 +2,17 @@
 'use strict';
 const QRCore = require('./public/assets/qr-encoder');
 const QRRenderer = require('./public/assets/qr-renderer');
-const BODIES=['square','mosaic','dots','circles','horizontal','vertical','rounded','classy','classy-rounded','leaf','blob','star','pixel','stripe','diamond','extra-rounded','small-square','slant','cross','rhombus','sparkles','arrow'];
-const FRAMES=['square','rounded','extra-rounded','left-cut','frame-dots','leaf','squircle','frame-pixels','soft','frame-dashed','double','circle','pill','right-cut','open'];
-const BALLS=['square','rounded','extra-rounded','small-square','dots','ball-clipped','ball-pixel','ball-blocks','flower','leaf','vertical','horizontal','circle','pill','ball-edges','diamond','ball-squircle','star'];
+const {MONKEY_BODIES:BODIES,MONKEY_FRAMES:FRAMES,MONKEY_BALLS:BALLS}=QRRenderer;
 class InputError extends Error {constructor(message){super(message);this.statusCode=400;}}
 function validColor(v,k){if(typeof v!=='string'||!/^#[0-9A-F]{6}$/i.test(v))throw new InputError(`${k} must be a #RRGGBB color`);return v.toUpperCase();}
 function choice(value,arr,key){if(!arr.includes(value))throw new InputError(`${key} must be one of: ${arr.join(', ')}`);return value;}
-function shape(s,arr,kind){if(s==null||s==='')return arr[0]; if(kind==='eye'&&/^frame\d+$/.test(s))s=arr[Number(s.slice(5))];if(kind==='eyeBall'&&/^ball\d+$/.test(s))s=arr[Number(s.slice(4))]; if(kind==='body'&&s==='circle')s='circles';if(kind==='body'&&s==='rounded-pointed')s='rhombus';return choice(s,arr,kind);}
+function shape(v,arr,key){
+ if(v==null||v==='')return arr[0];
+ const aliases={body:{dots:'dot',circles:'circle',rounded:'round',rhombus:'rounded-pointed','extra-rounded':'round'},eye:{square:'frame0',rounded:'frame6',circle:'frame12','right-cut':'frame14'},eyeBall:{square:'ball0',rounded:'ball15',circle:'ball14','ball-edges':'ball16'}};
+ if(aliases[key]?.[v])v=aliases[key][v];
+ return choice(v,arr,key);
+}
+function flips(value,name){if(value===undefined)return [];if(!Array.isArray(value)||value.length>2||value.some(x=>x!=='fv'&&x!=='fh'))throw new InputError(name+' must contain only fv or fh');return [...new Set(value)];}
 function settings(raw={}){
  if(raw==null)raw={};if(typeof raw!=='object'||Array.isArray(raw))throw new InputError('config must be a JSON object');
  const get=(k,f)=>raw[k]===undefined?f:raw[k];
@@ -30,7 +34,7 @@ function settings(raw={}){
   if(!obj||typeof obj.data!=='string'||!/^data:image\/(png|jpeg|webp);base64,[a-zA-Z0-9+/=]+$/.test(obj.data)||obj.data.length>800000)throw new InputError('logo must be a PNG/JPEG/WebP data URL under 600 KB; external URLs are not accepted');
   logo={data:obj.data,name:String(obj.name||'Logo').slice(0,100)};
  }
- return {body:shape(get('body','square'),BODIES,'body'),frame:shape(get('eye',get('frame','square')),FRAMES,'eye'),ball:shape(get('eyeBall',get('ball','square')),BALLS,'eyeBall'),fg:hasGradient?fg1:fg,fg2,bg,colorMode:hasGradient?'gradient':'single',gradientType:choice(get('gradientType','linear'),['linear','radial'],'gradientType'),gradientEyes,customEyes:true,eyeFrames:e1,eyeBalls:e2,transparent,logo,logoClean,logoSize};
+ return {body:shape(get('body','square'),BODIES,'body'),frame:shape(get('eye',get('frame','frame0')),FRAMES,'eye'),ball:shape(get('eyeBall',get('ball','ball0')),BALLS,'eyeBall'),eyeFlips:[1,2,3].map(i=>flips(get('erf'+i,[]),'erf'+i)),ballFlips:[1,2,3].map(i=>flips(get('brf'+i,[]),'brf'+i)),fg:hasGradient?fg1:fg,fg2,bg,colorMode:hasGradient?'gradient':'single',gradientType:choice(get('gradientType','linear'),['linear','radial'],'gradientType'),gradientEyes,customEyes:true,eyeFrames:e1,eyeBalls:e2,transparent,logo,logoClean,logoSize};
 }
 function requestOptions(req={}){
  const data=req.data;

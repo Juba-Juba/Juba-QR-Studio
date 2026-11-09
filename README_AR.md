@@ -1,4 +1,25 @@
-# Juba QR Studio v2.0 — لوحة تصميم QR + REST API
+# النسخة الجديدة: ربط GitHub Pages مع Cloudflare API
+
+**واجهة التصميم:** https://juba-juba.github.io/Juba-QR-Studio/
+
+**API على Cloudflare Workers (SVG):** https://juba-qr-studio-api.elprincedokdok0-048.workers.dev/api/v1/qr
+
+**وثائق API:** https://juba-juba.github.io/Juba-QR-Studio/api-docs.html
+
+> GitHub Pages استضافة ثابتة ولا تستطيع تشغيل Node REST API. النسخة السحابية على Workers تدعم SVG كامل التخصيص؛ نسخة Node/Docker تدعم PNG كذلك. أكواد الأشكال أصبحت بنفس معرفات API الرسمية لـ Monkey (22/15/18)، لكن الرسوم المستقلة تقريبية وليست ملفات الـSVG الأصلية المملوكة للخدمة.
+
+```js
+const response = await fetch('https://juba-qr-studio-api.elprincedokdok0-048.workers.dev/api/v1/qr', {
+  method: 'POST', headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({data:'https://example.com/nfc/001',file:'svg',size:1000,config:{body:'rounded-pointed',eye:'frame14',eyeBall:'ball16',bodyColor:'#294D2B',bgColor:'#FFFFFF'}})
+});
+if (!response.ok) throw new Error(await response.text());
+const svgBlob = await response.blob();
+```
+
+---
+
+# Juba QR Studio v2.1 — لوحة تصميم QR + REST API
 
 مشروع ويب مستقل دون شاشة دخول أو كلمة مرور، يقدّم واجهة تحرير تشبه تقسيم لوحة QRCode Monkey في الصورة المرجعية من حيث الأقسام، شكل البلاطات، الأزرار والمعاينة، لكنه لا ينسخ شعار QRCode Monkey أو كوده الخاص أو رسومه الأصلية.
 
