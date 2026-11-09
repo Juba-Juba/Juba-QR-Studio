@@ -48,7 +48,7 @@
           <label class="check-row"><input type="checkbox" id="logo-clean" checked><span data-i18n="logoClean">Remove background behind logo</span></label>
           <div class="range-inline"><label for="logo-size" data-i18n="logoSize">Logo Size</label><input type="range" id="logo-size" min="10" max="28" value="19"><output id="logo-size-val">19%</output></div>
           <p class="small-title" data-i18n="logoGallery">Logo Gallery</p><div class="logo-gallery" id="logo-gallery"></div>
-          <div class="content-inline-note"><span class="info-dot">i</span><span data-i18n="logoHelp">Upload PNG, JPG, GIF, WebP or SVG (max 2 MB). Logos are embedded in the export; no uploads are sent to any server.</span></div>
+          <div class="content-inline-note"><span class="info-dot">i</span><span data-i18n="logoHelp">Upload PNG, JPG, GIF, WebP or SVG (max 2 MB). Uploaded logos use the local renderer; Monkey integration is used for logo-free designs.</span></div>
         </div></div>
       </div>
       <div class="accordion is-open" id="section-design">
@@ -63,17 +63,17 @@
     </section>
     <aside class="preview-pane" aria-label="QR code preview">
       <div class="preview-top" hidden><div class="preview-label"><span class="preview-dot"></span><span data-i18n="livePreview">LIVE PREVIEW</span></div><span class="scan-badge" id="status-badge">Preview ready</span></div>
-      <div class="qr-stage" id="qr-stage"><div class="qr-preview" id="qr-preview" role="img" aria-label="QR code preview"></div></div>
+      <p id="source-note" style="font-size:12px;color:#667587;text-align:center;margin:4px auto 8px" aria-live="polite">Local renderer — approximate shapes</p><div class="qr-stage" id="qr-stage"><div class="qr-preview" id="qr-preview" role="img" aria-label="QR code preview"></div></div>
       <div class="size-section"><input type="range" id="export-size" min="200" max="3000" step="100" value="1000" aria-label="Export size"><div class="size-labels"><span data-i18n="lowQuality">Low Quality</span><strong id="size-value">1000 x 1000 Px</strong><span data-i18n="highQuality">High Quality</span></div></div>
       <div class="download-row"><button class="btn btn-green" id="generate-btn" data-i18n="generate">Create QR Code</button><button class="btn btn-blue" id="download-png" data-i18n="downloadPng">Download PNG</button></div>
       <div class="formats-row"><button id="download-svg" class="format-btn">.SVG</button><button id="download-pdf" class="format-btn">.PDF*</button><button id="download-eps" class="format-btn">.EPS*</button></div>
       <div class="formats-note" data-i18n="formatNote">* PDF / EPS export a classic high-contrast QR. Use SVG for full vector design + logo.</div>
-      <div class="preview-info"><span class="info-dot">i</span><p data-i18n="localInfo">Static QR codes can be used anywhere. For redirects and scan statistics, use a link from your own application.</p></div>
+      <div class="preview-info"><span class="info-dot">i</span><p data-i18n="localInfo">Monkey provider receives QR contents when the original rendering service is available. Local fallback is used when unavailable. QR codes are static; use your own redirect URL for updates.</p></div>
       <div class="quick-actions" hidden><button id="copy-content" class="action-link">⎘ <span data-i18n="copyContent">Copy QR data</span></button><button id="reset-all" class="action-link">↻ <span data-i18n="reset">Reset</span></button></div>
     </aside>
   </div>
   <div class="under-actions"><button class="templates-button" id="open-templates">⚙ &nbsp;<span data-i18n="templates">QR Code Templates</span></button><button class="secondary-button" id="import-preset"><span data-i18n="importPreset">Import preset</span></button><button class="secondary-button" id="export-preset"><span data-i18n="exportPreset">Export preset</span></button><input type="file" id="preset-input" accept="application/json,.json" hidden></div>
-  <div class="bottom-info"><div><b data-i18n="privateEngine">Private QR engine</b><span data-i18n="bottomSummary">Export ready-to-print codes in seconds without API subscriptions.</span></div><div class="feature-chips"><span>PNG</span><span>SVG</span><span>PDF</span><span>EPS</span><span>Offline QR</span></div></div>
+  <div class="bottom-info"><div><b data-i18n="privateEngine">Private QR engine</b><span data-i18n="bottomSummary">Supports original Monkey API where available, with independent local fallback.</span></div><div class="feature-chips"><span>PNG</span><span>SVG</span><span>PDF</span><span>EPS</span><span>Offline QR</span></div></div>
 </main>
 <footer class="site-footer"><span>QR STUDIO · 2026</span><span data-i18n="footer">Independent QR editor · Not affiliated with QRCode Monkey</span></footer>
 <div class="modal-backdrop" id="templates-modal" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="template-heading"><div class="modal-header"><div><h2 id="template-heading" data-i18n="chooseTemplate">Choose a QR Template</h2><p data-i18n="templateDesc">Start with a professionally balanced color and shape preset.</p></div><button class="modal-close" id="close-templates" aria-label="Close">×</button></div><div class="template-grid" id="template-grid"></div></div></div>

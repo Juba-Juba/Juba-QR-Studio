@@ -1,3 +1,43 @@
+# Juba QR Studio v2.2 — الربط الحقيقي بـ QRCode Monkey (مع fallback)
+
+**الواجهة:** https://juba-juba.github.io/Juba-QR-Studio/
+
+**API:** https://juba-qr-studio-api.elprincedokdok0-048.workers.dev/api/v1/qr
+
+## التعديل
+
+- `provider: "auto"` (الافتراضي): يحاول استدعاء Monkey المباشر أولًا ثم يستخدم المحرّك المحلي **SVG فقط** عند التعذر.
+- `provider: "monkey"`: يطلب صورة Monkey الأصلية بشكل صارم؛ يفشل HTTP 503 لو الأصل غير متاح، ولا يزعم أن الرسم المحلي هو الأصلي.
+- `provider: "local"`: يستخدم محرّكنا المستقل، مع التنبيه أن الأنماط تقريبية.
+- API الرسمي يدعم `png/svg/pdf/eps`، لكن الوصول المجاني المباشر على `api.qr-code-monkey.com` غير مضمون استقرارًا أو ترخيصًا تجاريًا؛ الصفحة الرسمية تشير إلى RapidAPI للاستخدام الاحترافي. يمكنك تهيئة `MONKEY_RAPIDAPI_KEY` و `MONKEY_RAPIDAPI_URL` من **أسرار الخادم فقط** بعد الاشتراك والتأكد من رابط الـgateway الصحيح. لا تضع المفتاح في ملفات GitHub Pages.
+- المعاينة المحلية فورية، ويُستبدل الرمز بالصورة الأصلية بعد استجابة Monkey الفعلية. يظهر تحتها مصدر التوليد. ملف التصدير يفضّل النسخة الأصلية ويُظهر رسالة إذا تعذّر استخدامها.
+- أسماء القوالب الرسمية 22 Body / 15 Eye / 18 EyeBall مدعومة بنفس قيم `config`؛ لا يتم إرسال إعداد غير مدعوم إلى المصدر.
+- **اللوجوهات المرفوعة من المتصفح لا تُرفع إلى Monkey تلقائيًا**، وتُرسم محليًا للحفاظ على البيانات؛ رفع الصور إلى Monkey يحتاج ربط `/qr/uploadImage` وشروط الخدمة.
+
+### مثال JavaScript
+
+```javascript
+const api = 'https://juba-qr-studio-api.elprincedokdok0-048.workers.dev/api/v1/qr';
+const response = await fetch(api, {
+  method: 'POST',
+  headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({
+    data: 'https://example.com/smart/001',
+    file: 'svg',
+    provider: 'auto',
+    size: 1000,
+    config: {body:'rounded-pointed',eye:'frame14',eyeBall:'ball16',bodyColor:'#294D2B',bgColor:'#FFFFFF'}
+  })
+});
+if (!response.ok) throw new Error(await response.text());
+console.log('Renderer:',response.headers.get('X-QR-Renderer')); // monkey-direct | monkey-rapidapi | local-fallback
+const blob = await response.blob();
+```
+
+**الخصوصية:** لو Monkey متاح، محتوى QR بيتبعت للخدمة الخارجية. لا تستخدم بيانات شخصية/سرية في رموز QR، واستخدم الروابط اللي تخص تطبيقك.
+
+---
+
 # النسخة الجديدة: ربط GitHub Pages مع Cloudflare API
 
 **واجهة التصميم:** https://juba-juba.github.io/Juba-QR-Studio/

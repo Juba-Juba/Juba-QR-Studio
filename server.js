@@ -6,6 +6,8 @@ const path=require('node:path');
 const os=require('node:os');
 const {spawn,spawnSync}=require('node:child_process');
 const {InputError,requestOptions,generateSVG,BODIES,FRAMES,BALLS}=require('./qr-service');
+const MonkeyProvider=require('./monkey-provider');
+let monkeyUnavailableUntil=0;
 const root=path.resolve(__dirname,'public');
 const port=Number(process.env.PORT||4173);
 const host=process.env.HOST||'127.0.0.1';
@@ -21,7 +23,7 @@ function json(res,status,obj){send(res,status,JSON.stringify(obj),MIME['.json'])
 function cors(req,res){const origin=req.headers.origin;
  if(allowedOrigins.includes('*'))res.setHeader('Access-Control-Allow-Origin','*');
  else if(origin&&allowedOrigins.includes(origin)){res.setHeader('Access-Control-Allow-Origin',origin);res.setHeader('Vary','Origin');}
- res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');res.setHeader('Access-Control-Allow-Headers','Content-Type');res.setHeader('Access-Control-Max-Age','86400');
+ res.setHeader('Access-Control-Allow-Methods','GET, POST, OPTIONS');res.setHeader('Access-Control-Allow-Headers','Content-Type');res.setHeader('Access-Control-Expose-Headers','X-QR-Renderer, X-QR-Provider-Status');res.setHeader('Access-Control-Max-Age','86400');
 }
 function limited(req,res){const ip=req.socket.remoteAddress||'unknown',now=Date.now();
  if(hits.size>20000)for(const [k,v] of hits)if(v.expire<now)hits.delete(k);
@@ -63,8 +65,8 @@ const server=http.createServer(async(req,res)=>{
  const pathname=url.pathname,method=req.method||'GET',api=pathname.startsWith('/api/')||pathname==='/qr/custom';
  if(api){cors(req,res);
   if(method==='OPTIONS'){res.statusCode=204;res.end();return;}
-  if(pathname==='/api/v1/health'&&method==='GET')return json(res,200,{ok:true,name:'Juba QR Studio',version:'2.1.0'});
-  if(pathname==='/api/v1/shapes'&&method==='GET')return json(res,200,{body:BODIES,eye:FRAMES,eyeBall:BALLS,formats:['svg','png'],limits:{size:{min:200,max:3000},dataBytes:2500}});
+  if(pathname==='/api/v1/health'&&method==='GET')return json(res,200,{ok:true,name:'Juba QR Studio',version:'2.2.0'});
+  if(pathname==='/api/v1/shapes'&&method==='GET')return json(res,200,{body:BODIES,eye:FRAMES,eyeBall:BALLS,formats:MonkeyProvider.FORMATS,limits:{size:{min:200,max:3000},dataBytes:2500}});
   if(pathname==='/api/v1/qr'||pathname==='/qr/custom'){
    if(method!=='GET'&&method!=='POST')return json(res,405,{error:'method_not_allowed'});
    if(limited(req,res))return;
@@ -76,10 +78,31 @@ const server=http.createServer(async(req,res)=>{
      if(!String(req.headers['content-type']||'').toLowerCase().startsWith('application/json'))throw new InputError('Content-Type must be application/json');
      args=await readJSON(req);
     }
-    const opts=requestOptions(args),svg=generateSVG(opts);
-    const data=opts.file==='svg'?Buffer.from(svg,'utf8'):await pngFromSVG(svg,opts.size);
-    res.setHeader('Content-Type',opts.file==='svg'?'image/svg+xml; charset=utf-8':'image/png');
-    res.setHeader('Content-Disposition',`${opts.download?'attachment':'inline'}; filename="juba-qr-studio.${opts.file}"`);
+    const rawLogo=args.config?.logo;
+    const customDataLogo=Boolean(rawLogo&&(typeof rawLogo==='object'||typeof rawLogo==='string'&&rawLogo.startsWith('data:')));
+    const monkeyConfig={...(args.config||{})};if(customDataLogo)delete monkeyConfig.logo;
+    const monkeyOpts=MonkeyProvider.validOptions({...args,config:monkeyConfig});
+    const fallbackConfig={...(args.config||{})};if(typeof rawLogo==='string'&&rawLogo.startsWith('#'))delete fallbackConfig.logo;
+    const opts=requestOptions({...args,file:'svg',config:fallbackConfig});
+    let remote={success:false,why:'local_mode'};
+    if(monkeyOpts.provider!=='local'&&!customDataLogo){
+      if(monkeyOpts.provider==='monkey'||Date.now()>monkeyUnavailableUntil){
+       remote=await MonkeyProvider.requestImage({...args,config:monkeyConfig},{apiKey:process.env.MONKEY_RAPIDAPI_KEY||'',rapidapiUrl:process.env.MONKEY_RAPIDAPI_URL||'',timeoutMs:4800});
+       if(!remote.success&&monkeyOpts.provider==='auto')monkeyUnavailableUntil=Date.now()+60000;
+      }else remote={success:false,why:'upstream_temporarily_unavailable'};
+    }else if(customDataLogo)remote={success:false,why:'logo_requires_local_renderer'};
+    if(remote.success){
+      res.setHeader('X-QR-Renderer',remote.source);res.setHeader('X-QR-Provider-Status','ok');
+      res.setHeader('Content-Type',remote.contentType);res.setHeader('Content-Disposition',`${monkeyOpts.download?'attachment':'inline'}; filename="juba-qr-studio.${monkeyOpts.file}"`);
+      res.setHeader('Content-Length',remote.bytes.byteLength);res.statusCode=200;res.end(Buffer.from(remote.bytes));return;
+    }
+    if(monkeyOpts.provider==='monkey'||typeof rawLogo==='string'&&rawLogo.startsWith('#'))return json(res,503,{error:'monkey_upstream_unavailable',reason:remote.why});
+    if(!['svg','png'].includes(monkeyOpts.file))return json(res,503,{error:'format_unavailable',reason:remote.why});
+    const svg=generateSVG(opts);
+    const data=monkeyOpts.file==='svg'?Buffer.from(svg,'utf8'):await pngFromSVG(svg,opts.size);
+    res.setHeader('X-QR-Renderer','local-fallback');res.setHeader('X-QR-Provider-Status',remote.why||'local');
+    res.setHeader('Content-Type',monkeyOpts.file==='svg'?'image/svg+xml; charset=utf-8':'image/png');
+    res.setHeader('Content-Disposition',`${monkeyOpts.download?'attachment':'inline'}; filename="juba-qr-studio.${monkeyOpts.file}"`);
     res.setHeader('Content-Length',data.length);res.statusCode=200;res.end(data);return;
    }catch(e){return json(res,e.statusCode||500,{error:e.statusCode===400?'invalid_request':'render_failed',message:e.statusCode?e.message:'Unexpected QR renderer error'});}
   }

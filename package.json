@@ -1,6 +1,6 @@
 {
   "name": "juba-qr-studio",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "description": "QR Code Studio editor and REST API with customizable SVG/PNG QR codes. No password required.",
   "scripts": {
